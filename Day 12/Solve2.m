@@ -87,9 +87,7 @@ function cPaths = explore(G, visited, cPaths, currNode, smallCavesAllowRep)
     neigh = neighbors(G, currNode);
     
     for i = 1:numel(neigh)
-        if neigh(i) == upper(neigh(i))
-            cPaths = explore(G, visited, cPaths, neigh(i), smallCavesAllowRep);
-        elseif ~contains(neigh(i), visited)
+        if neigh(i) == upper(neigh(i)) || ~contains(neigh(i), visited)
             cPaths = explore(G, visited, cPaths, neigh(i), smallCavesAllowRep);
         elseif sum(count(visited, neigh(i))) <= smallCavesAllowRep
             cPaths = explore(G, visited, cPaths, neigh(i), 0);
