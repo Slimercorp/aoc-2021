@@ -34,73 +34,12 @@ for i=1:topsCount
         end
     end
 end
-G2 = digraph(A,tops);
-plot(G2)
 
-%Добавляем большие пещеры
-addN=3;
-wasAdded = 0;
-for i=1:topsCount
-    if string(tops{i}) == string(upper(tops{i}))
-        index = getIndexTop(tops, tops{i});
-        for j=1:addN
-            A(:,topsCount+j+wasAdded) = A(:,index);
-            A(topsCount+j+wasAdded, topsCount+j+wasAdded) = 0;
-            A(topsCount+j+wasAdded,:) = A(:,topsCount+j+wasAdded)';
-            tops{topsCount+j+wasAdded} = [tops{index} num2str(j)];
-        end
-        wasAdded = wasAdded + addN;
-    end
-end
+G = graph(A,tops);
+plot(G)
 
-expand = 'xn';
-%expand = 'ut';
-%expand = 'gx';
-%expand = 'll';
-%expand = 'dj';
-%expand = 'ak';
-
-% добавляем маленькие пещеры
-for i=1:topsCount
-    if string(tops{i}) == string(expand)
-        index = getIndexTop(tops, tops{i});
-        A(:,topsCount+wasAdded+1) = A(:,index);
-        A(topsCount+wasAdded+1, topsCount+wasAdded+1) = 0;
-        A(topsCount+wasAdded+1,:) = A(:,topsCount+wasAdded+1)';
-        tops{topsCount+wasAdded+1} = [tops{index} num2str(1)];
-        wasAdded = wasAdded + 1;
-    end
-end
-
-G = digraph(A,tops);
-%plot(G)
-paths = allpaths(G,'start','end');
-length(tops)
-%% return names
-for i=topsCount+1:length(tops)
-    value = tops{i};
-    replacement = value(1:end-1);
-    for j=1:length(paths)
-        for k=1:length(paths{j})
-            if string(paths{j}(k)) == string(value)
-                paths{j}(k) = {replacement};
-            end
-        end
-    end
-    i
-end
-
-%to one row
-for i=1:length(paths)
-    newPaths(i) = cell(1);
-    for j=1:length(paths{i})
-        newPaths{i} = [char(newPaths{i}) char(paths{i}(j)) ','];
-    end
-    newPaths{i}(end) = [];
-end
-
-newPaths = unique(newPaths)';
-length(newPaths)
+%% ищем пути
+explore(G, string.empty, 0, "start", 1)
 
 %%
 function [tops, topsCount] = addToTops(tops, topsCount, name)
@@ -128,6 +67,32 @@ function [index] = getIndexTop(tops, name)
         if (string(tops{i}) == string(name))
             index = i;
             return;
+        end
+    end
+end
+
+%% Recursive exploration function
+function cPaths = explore(G, visited, cPaths, currNode, smallCavesAllowRep)
+    if "start" == currNode && numel(visited) > 1
+        return
+    end
+
+    visited(end+1) = currNode;
+
+    if "end" == currNode
+        cPaths = cPaths + 1;
+        return
+    end
+
+    neigh = neighbors(G, currNode);
+    
+    for i = 1:numel(neigh)
+        if neigh(i) == upper(neigh(i))
+            cPaths = explore(G, visited, cPaths, neigh(i), smallCavesAllowRep);
+        elseif ~contains(neigh(i), visited)
+            cPaths = explore(G, visited, cPaths, neigh(i), smallCavesAllowRep);
+        elseif sum(count(visited, neigh(i))) <= smallCavesAllowRep
+            cPaths = explore(G, visited, cPaths, neigh(i), 0);
         end
     end
 end
