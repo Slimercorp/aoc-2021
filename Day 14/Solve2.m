@@ -25,47 +25,82 @@ while 1
     rules(row,2) = string(tline(indexs(1)+3:end));
 end
 
+allPairs = struct;
+for i=1:length(char(polymer))-1
+    pair = char(polymer);
+    pair = pair(i:i+1);
+
+    if isfield(allPairs,pair)
+        eval(['allPairs.' pair ' = allPairs.' pair ' + 1;']);
+    else
+        eval(['allPairs.' pair ' = 1;']);
+    end
+end
+
 for i=1:40
-    newPolymer = '';
     i
-    for j=1:length(char(polymer))-1
-        pair = char(polymer);
-        firstLetter = pair(j);
-        pair = string(pair(j:j+1));
+    allPairsTemp = struct;
+    fields = fieldnames(allPairs);
+    for j=1:length(fields)
+        firstLetter = fields{j}(1);
+        lastLetter = fields{j}(2);
+        howMuch = eval(['allPairs.' fields{j}]);
         addChar = '';
         for k=1:length(rules)
-            if rules(k,1) == pair
+            if rules(k,1) == string(fields{j})
                 addChar = char(rules(k,2));
                 break;
             end
         end
-        newPolymer = [newPolymer firstLetter addChar];
+
+        if ~isempty(addChar)
+            newPair = [firstLetter addChar];
+            if isfield(allPairsTemp,newPair)
+                eval(['allPairsTemp.' newPair ' = allPairsTemp.' newPair ' + howMuch;']);
+            else
+                eval(['allPairsTemp.' newPair ' = howMuch;']);
+            end
+
+            newPair = [addChar lastLetter];
+            if isfield(allPairsTemp,newPair)
+                eval(['allPairsTemp.' newPair ' = allPairsTemp.' newPair ' + howMuch;']);
+            else
+                eval(['allPairsTemp.' newPair ' = howMuch;']);
+            end
+        else
+            if isfield(allPairsTemp,fields{j})
+                eval(['allPairsTemp.' fields{j} ' = allPairsTemp.' fields{j} ' + howMuch;']);
+            else
+                eval(['allPairsTemp.' fields{j} ' = howMuch;']);
+            end
+        end
     end
-    pair = char(polymer);
-    newPolymer = [newPolymer pair(end)];
-    polymer = newPolymer;
+    allPairs = allPairsTemp;
 end
+
 
 maxLetter = 0;
 minLetter = inf;
 for i='A':'Z'
-    polymerChar = char(polymer);
-    counter = 0;
-    for j=1:length(polymerChar)
-        if (polymerChar(j) == i)
-            counter = counter + 1;
+    fields = fieldnames(allPairs);
+    count = 0;
+    for j=1:length(fields)
+
+        if ~contains(fields{j}(1),i)
+            continue;
+        else
+            count = count + eval(['allPairs.' fields{j}]);
         end
     end
 
-    if counter > maxLetter
-        maxLetter = counter;
-        maxLetter2 = i;
+    if count > maxLetter
+        maxLetter = count;
     end
 
-    if counter < minLetter && counter ~= 0
-        minLetter = counter;
-        minLetter2 = i;
+    if count < minLetter && count ~= 0
+        minLetter = count;
     end
+
 end
 
 maxLetter - minLetter
